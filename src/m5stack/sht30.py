@@ -1,5 +1,6 @@
 from typing import Protocol, runtime_checkable
 from dataclasses import dataclass
+from m5stack.exceptions import SHT30Error
 
 @runtime_checkable
 class ISHT30(Protocol):
