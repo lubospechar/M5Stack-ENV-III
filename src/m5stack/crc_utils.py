@@ -11,6 +11,16 @@ def crc8_sht(data: bytes) -> int:
         crc = _crc8_apply_byte(crc, b, polynomial, width)
     return crc
 
+def crc8_qmp(data: bytes) -> int:
+    """Compute CRC-8 checksum for QMP6988 sensor (poly=0x07, init=0x00)."""
+    polynomial = 0x07   # x^8 + x^2 + x + 1
+    init_value = 0x00
+    width = 8
+
+    crc = init_value
+    for b in data:
+        crc = _crc8_apply_byte(crc, b, polynomial, width)
+    return crc
 
 def _crc8_apply_byte(crc: int, byte: int, polynomial: int, width: int) -> int:
     """Integrate one data byte into the CRC register."""

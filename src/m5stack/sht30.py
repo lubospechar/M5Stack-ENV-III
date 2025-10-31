@@ -100,7 +100,7 @@ class SHT30:
 
 if __name__ == "__main__":
     # Adjust bus_number for your system or stub bus
-    sensor = SHT30(bus_number=1, address=0x44)
+    sensor = SHT30(bus_number=16, address=0x44)
     try:
         temperature, humidity = sensor.read()
         print(f"Temperature: {temperature:.2f} °C")
