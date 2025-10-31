@@ -34,3 +34,15 @@ class SHT30:
 
     def read_humidity(self):
         return 0.5
+
+
+# Optional quick smoke test when running this file directly:
+if __name__ == "__main__":
+    # Adjust bus_num to your stub bus (e.g., 16), keep addr at 0x44
+    sensor = SHT30(bus_num=1, address=0x44)  # change bus_num for your i2c-stub
+    try:
+        t, rh = sensor.read()
+        print(f"Temperature: {t:.2f} °C")
+        print(f"Humidity:    {rh:.1f} %")
+    except SHT30Error as e:
+        print("SHT30Error:", e)
