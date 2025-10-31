@@ -55,6 +55,8 @@ class QMP6988:
     measurement_delay_seconds: float = _MEASUREMENT_DELAY_S
     bus_factory: Callable[[int], Any] = SMBus
 
+    coef_a: float = 0.01
+    coef_b: float = 0.0
 
     # --- Internal helpers -----------------------------------------------------
 
