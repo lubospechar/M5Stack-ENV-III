@@ -41,7 +41,7 @@ _READ_FRAME_LENGTH: int = 6
 # --- SHT30 Driver Implementation ----------------------------------------------
 
 @dataclass(slots=True)
-class SHT30(ISHT30):
+class SHT30:
     """Minimal SHT30 single-shot reader with CRC validation.
 
     Parameters
@@ -66,18 +66,18 @@ class SHT30(ISHT30):
         """Trigger a single-shot measurement and return raw (temperature, humidity)."""
         try:
             with self.bus_factory(self.bus_number) as bus:
-                # 1️⃣ Trigger measurement
+                # 1. Trigger measurement
                 bus.write_i2c_block_data(
                     self.address, _COMMAND_SINGLE_HIGH[0], [_COMMAND_SINGLE_HIGH[1]]
                 )
-                # 2️⃣ Wait for the sensor to complete measurement
+                # 2️. Wait for the sensor to complete measurement
                 time.sleep(self.measurement_delay_seconds)
-                # 3️⃣ Read 6-byte measurement frame
+                # 3️. Read 6-byte measurement frame
                 frame = bytes(bus.read_i2c_block_data(self.address, 0x00, _READ_FRAME_LENGTH))
         except OSError as error:
             raise SHT30Error(f"I2C communication failed: {error}") from error
 
-        # 4️⃣ Parse and validate the frame
+        # 4️. Parse and validate the frame
         return parse_measurement_frame(frame)
 
     def read(self) -> tuple[float, float]:
