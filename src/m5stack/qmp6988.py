@@ -1,11 +1,5 @@
-"""Driver for the QMP6988 pressure sensor (pressure-only).
+"""Driver for the QMP6988 pressure sensor (pressure-only)."""
 
-Pozn.: Tento ovladač provádí jednorázové měření (forced mode), čeká na dokončení
-pomocí STATUS registru a čte 3 bajty tlaku (0xF7..0xF9). Převod z raw->Pa je
-zatím lineárním zjednodušením přes conversion_utils.raw_to_pascal() s koeficienty
-(0.01, 0.0), aby se dostaly hodnoty v rozumném rozsahu. Finální kompenzaci
-(lépe kalibrované koeficienty z OTP) můžeme doplnit v další iteraci.
-"""
 
 import time
 from dataclasses import dataclass
@@ -102,16 +96,5 @@ class QMP6988:
         """Read and return pressure in Pascals (Pa)."""
         frame = self._read_frame()
         raw = parse_pressure_frame(frame)  # 3-byte frame -> 24-bit raw
-        # Dočasná lineární konverze na Pa; finální kompenzaci doplníme později.
         return raw_to_pascal(raw, self.coef_a, self.coef_b)
 
-
-# --- Optional CLI Smoke Test --------------------------------------------------
-
-if __name__ == "__main__":
-    sensor = QMP6988(bus_number=1, address=_DEFAULT_ADDRESS)
-    try:
-        pressure = sensor.read_pressure()
-        print(f"Pressure: {pressure:.2f} Pa")
-    except QMP6988Error as error:
-        print("QMP6988Error:", error)
