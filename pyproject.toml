@@ -1,0 +1,48 @@
+[build-system]
+requires = ["hatchling>=1.21"]
+build-backend = "hatchling.build"
+
+[project]
+name = "m5stack"
+version = "0.1.0"
+description = "Read temperature (SHT30), humidity (SHT30) and pressure (QMP6988) from M5Stack ENV-III over I2C."
+readme = "README.md"
+authors = [{ name = "aerolog", email = "example@example.com" }]
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+dependencies = [
+  "smbus2>=0.4.3",
+]
+keywords = ["m5stack", "env-iii", "sht30", "qmp6988", "i2c", "raspberry-pi", "temperature", "humidity", "pressure"]
+classifiers = [
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: POSIX :: Linux",
+  "Topic :: System :: Hardware",
+]
+
+[project.urls]
+Homepage = "https://github.com/lubospechar/M5Stack-ENV-III"
+Repository = "https://github.com/lubospechar/M5Stack-ENV-III.git"
+Issues = "https://github.com/lubospechar/M5Stack-ENV-III/issues"
+
+[project.scripts]
+m5stack = "m5stack.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/m5stack"]
+
+[tool.hatch.build]
+include = [
+  "src/m5stack/**",
+  "README.md",
+  "LICENSE",
+  "tests/**",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "mypy", "build", "hatchling"]
