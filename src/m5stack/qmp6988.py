@@ -1,4 +1,11 @@
-"""Driver for the QMP6988 pressure sensor (pressure-only)."""
+"""Driver for the QMP6988 pressure sensor (pressure-only).
+
+Pozn.: Tento ovladač provádí jednorázové měření (forced mode), čeká na dokončení
+pomocí STATUS registru a čte 3 bajty tlaku (0xF7..0xF9). Převod z raw->Pa je
+zatím lineárním zjednodušením přes conversion_utils.raw_to_pascal() s koeficienty
+(0.01, 0.0), aby se dostaly hodnoty v rozumném rozsahu. Finální kompenzaci
+(lépe kalibrované koeficienty z OTP) můžeme doplnit v další iteraci.
+"""
 
 import time
 from dataclasses import dataclass
@@ -23,38 +30,42 @@ class IQMP6988(Protocol):
         ...
 
 
-# --- Internal QMP6988 configuration ------------------------------------------
+# --- Internal QMP6988 register/configuration ----------------------------------
 
 _DEFAULT_ADDRESS: int = 0x70
 
-# Register map (BMP280/QMP6988 compatible)
-_REG_STATUS = 0xF3
-_REG_CTRL_MEAS = 0xF4
-_REG_PRESS_MSB = 0xF7  # LSB=0xF8, XLSB=0xF9
+# Register map (BMP280/QMP6988 compatible for data path)
+_REG_STATUS     = 0xF3
+_REG_CTRL_MEAS  = 0xF4
+_REG_PRESS_MSB  = 0xF7  # LSB=0xF8, XLSB=0xF9
 
 # CTRL_MEAS bits: [7:5]=osrs_t, [4:2]=osrs_p, [1:0]=mode
 _OSRS_T_SKIP = 0b000 << 5
-_OSRS_P_X4 = 0b011 << 2
+_OSRS_P_X4   = 0b011 << 2
 _MODE_FORCED = 0b01
 
-_READ_FRAME_LENGTH: int = 3  # 3 data bytes (no CRC)
+_READ_FRAME_LENGTH: int   = 3   # 3 data bytes (no CRC)
 _MEASUREMENT_DELAY_S: float = 0.010
-_POLL_SLEEP_S: float = 0.003
-_POLL_TIMEOUT_S: float = 0.150
+_POLL_SLEEP_S: float        = 0.003
+_POLL_TIMEOUT_S: float      = 0.150
 
 
-# --- QMP6988 Driver Implementation -------------------------------------------
+# --- QMP6988 Driver Implementation --------------------------------------------
 
 @dataclass(slots=True)
 class QMP6988:
-    """Minimal QMP6988 single-shot pressure reader."""
+    """Minimal QMP6988 single-shot pressure reader with simple raw->Pa scaling."""
 
     bus_number: int = 1
     address: int = _DEFAULT_ADDRESS
     measurement_delay_seconds: float = _MEASUREMENT_DELAY_S
     bus_factory: Callable[[int], Any] = SMBus
 
-    # --- Internals ------------------------------------------------------------
+    # Dočasné koeficienty pro převod na Pa (lineární aproximace).
+    coef_a: float = 0.01
+    coef_b: float = 0.0
+
+    # --- Internal helpers -----------------------------------------------------
 
     def _trigger_forced_measure(self, bus) -> None:
         """Configure oversampling and start a single forced measurement."""
@@ -66,7 +77,7 @@ class QMP6988:
         deadline = time.monotonic() + _POLL_TIMEOUT_S
         while True:
             status = bus.read_byte_data(self.address, _REG_STATUS)
-            measuring = (status & 0x08) != 0
+            measuring = (status & 0x08) != 0  # measuring bit
             if not measuring:
                 return
             if time.monotonic() > deadline:
@@ -91,7 +102,8 @@ class QMP6988:
         """Read and return pressure in Pascals (Pa)."""
         frame = self._read_frame()
         raw = parse_pressure_frame(frame)  # 3-byte frame -> 24-bit raw
-        return raw_to_pascal(raw)  # placeholder; replace once calibration is added
+        # Dočasná lineární konverze na Pa; finální kompenzaci doplníme později.
+        return raw_to_pascal(raw, self.coef_a, self.coef_b)
 
 
 # --- Optional CLI Smoke Test --------------------------------------------------
